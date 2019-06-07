@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:gbk_codec/gbk_codec.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' show parse;
@@ -10,7 +11,8 @@ Future<List<String>> fetchPrices(Client client) async {
   Response resp = await client.get('http://www.62422.cn/search.asp?cataid=77');
   var document = parse(gbk_bytes.decode(resp.bodyBytes));
   List<dom.Element> links = document.querySelectorAll('a[href^=look]');
-  String urlPath = links.where((it) => it.text.contains('山东')).first.attributes['href'];
+  String urlPath =
+      links.where((it) => it.text.contains('山东')).first.attributes['href'];
 
   //String urlPath = "look.asp?id=372975";
   resp = await client.get('http://www.62422.cn/${urlPath}');
@@ -37,7 +39,6 @@ class PricesList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DraggableScrollbar.rrect(
-    //return Scrollbar(
       controller: controller,
       child: ListView.builder(
         controller: controller,
@@ -65,7 +66,10 @@ class PricesList extends StatelessWidget {
   }
 }
 
-void main() => runApp(MyApp(prices: fetchPrices(Client())));
+void main() {
+  SystemChrome.setEnabledSystemUIOverlays([]);
+  runApp(MyApp(prices: fetchPrices(Client())));
+}
 
 class MyApp extends StatelessWidget {
   final Future<List<String>> prices;
