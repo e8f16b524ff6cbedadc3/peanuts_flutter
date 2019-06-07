@@ -1,0 +1,22 @@
+local _DIRNAME=${PWD##*/}
+local _FLUTTER=~/Android/flutter/bin/flutter
+local _DART_SDK=~/Android/flutter/bin/cache/dart-sdk/bin/
+
+deactivate () {
+  export PS1=$_OLD_PS1
+  export PATH=$_OLD_PATH
+  unset -v _OLD_PS1 _OLD_PATH
+  unset -v PUB_HOSTED_URL FLUTTER_STORAGE_BASE_URL
+  unalias flutter
+}
+
+
+if ! grep -qi $_DIRNAME <<< $PS1; then
+  _OLD_PS1=$PS1
+  _OLD_PATH=$PATH
+  export PS1="($_DIRNAME) $PS1"
+  export PATH="$_DART_SDK:$PATH:$HOME/.pub-cache/bin"
+  export PUB_HOSTED_URL=https://pub.flutter-io.cn
+  export FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn
+  alias flutter=$_FLUTTER
+fi
