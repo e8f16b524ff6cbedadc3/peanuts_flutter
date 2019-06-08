@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:gbk_codec/gbk_codec.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' show parse;
@@ -53,13 +52,6 @@ class LocationsList extends StatelessWidget {
               child: ListTile(
                 title: Text(locationsList[index], textAlign: TextAlign.center),
                 trailing: Icon(Icons.keyboard_arrow_right),
-                //return ListTile(
-                //  title: Card(
-                //    child: Padding(
-                //        padding: EdgeInsets.all(10.0),
-                //        child:
-                //            Text(locationsList[index], textAlign: TextAlign.center)),
-                //  ),
                 onTap: () => {
                       Navigator.of(context).push(MaterialPageRoute<void>(
                           builder: (BuildContext context) {
@@ -82,9 +74,6 @@ class LocationsList extends StatelessWidget {
                     },
               ));
         },
-        //separatorBuilder: (context, index) {
-        //return Divider();
-        //}
       ),
     );
   }
@@ -115,13 +104,11 @@ class PricesList extends StatelessWidget {
 }
 
 void main() {
-  //SystemChrome.setEnabledSystemUIOverlays([]);
   runApp(MyApp(locations: fetchLocations(Client())));
 }
 
 class MyApp extends StatelessWidget {
   final Future<Map<String, String>> locations;
-  //final Future<List<String>> prices;
 
   MyApp({Key key, this.locations}) : super(key: key);
 
