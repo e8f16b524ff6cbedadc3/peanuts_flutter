@@ -6,7 +6,8 @@ import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart';
 
-Future<Map<String, String>> fetchLocations(Client client) async {
+Future<Map<String, String>> fetchLocations() async {
+  Client client = Client();
   Response resp = await client.get('http://www.62422.cn/search.asp?cataid=77');
   var document = parse(gbk_bytes.decode(resp.bodyBytes));
   List<dom.Element> links = document.querySelectorAll('a[href^=look]');
@@ -17,7 +18,8 @@ Future<Map<String, String>> fetchLocations(Client client) async {
   return result;
 }
 
-Future<List<String>> fetchPrices(Client client, String urlPath) async {
+Future<List<String>> fetchPrices(String urlPath) async {
+  Client client = Client();
   Response resp = await client.get('http://www.62422.cn/${urlPath}');
   var document = parse(gbk_bytes.decode(resp.bodyBytes));
   String title = document.querySelector('title').text.split(':')[0];
@@ -48,30 +50,28 @@ class LocationsList extends StatelessWidget {
         itemCount: locations.length,
         itemBuilder: (BuildContext ctx, int index) {
           return Card(
-              margin: EdgeInsets.all(4.0),
               child: ListTile(
                 title: Text(locationsList[index], textAlign: TextAlign.center),
                 trailing: Icon(Icons.keyboard_arrow_right),
-                onTap: () => {
-                      Navigator.of(context).push(MaterialPageRoute<void>(
-                          builder: (BuildContext context) {
-                        return Scaffold(
-                          appBar: AppBar(
-                            title: Text(locationsList[index]),
-                          ),
-                          body: FutureBuilder<List<String>>(
-                            future: fetchPrices(
-                                Client(), locations[locationsList[index]]),
-                            builder: (context, snapshot) {
-                              if (snapshot.hasError) print(snapshot.error);
-                              return snapshot.hasData
-                                  ? PricesList(prices: snapshot.data)
-                                  : Center(child: CircularProgressIndicator());
-                            },
-                          ),
-                        );
-                      }))
-                    },
+                onTap: () {
+                  Navigator.of(context).push(
+                      MaterialPageRoute<void>(builder: (BuildContext context) {
+                    return Scaffold(
+                      appBar: AppBar(
+                        title: Text(locationsList[index], style: TextStyle(fontSize: 17)),
+                      ),
+                      body: FutureBuilder<List<String>>(
+                        future: fetchPrices(locations[locationsList[index]]),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasError) print(snapshot.error);
+                          return snapshot.hasData
+                              ? PricesList(prices: snapshot.data)
+                              : Center(child: CircularProgressIndicator());
+                        },
+                      ),
+                    );
+                  }));
+                },
               ));
         },
       ),
@@ -104,7 +104,7 @@ class PricesList extends StatelessWidget {
 }
 
 void main() {
-  runApp(MyApp(locations: fetchLocations(Client())));
+  runApp(MyApp(locations: fetchLocations()));
 }
 
 class MyApp extends StatelessWidget {
@@ -121,7 +121,8 @@ class MyApp extends StatelessWidget {
       ),
       home: Scaffold(
         appBar: AppBar(
-          title: Text('花生价格行情', textAlign: TextAlign.center),
+          title: Text('中国花生价格行情', textAlign: TextAlign.center),
+          centerTitle: true,
         ),
         body: FutureBuilder<Map<String, String>>(
           future: locations,
