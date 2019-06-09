@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
+import 'package:flutter/cupertino.dart' show CupertinoPageRoute;
 import 'package:flutter/material.dart';
 import 'package:gbk_codec/gbk_codec.dart';
 import 'package:html/dom.dart' as dom;
@@ -70,7 +71,7 @@ class CategoriesList extends StatelessWidget {
             trailing: Icon(Icons.keyboard_arrow_right),
             onTap: () {
               Navigator.of(context).push(
-                  MaterialPageRoute<void>(builder: (BuildContext context) {
+                  CupertinoPageRoute<void>(builder: (BuildContext context) {
                 return Scaffold(
                   appBar: AppBar(
                     title: Text(categoriesList[index],
