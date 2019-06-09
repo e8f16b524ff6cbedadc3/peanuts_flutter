@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import 'package:flutter/cupertino.dart' show CupertinoPageRoute;
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Element;
 import 'package:gbk_codec/gbk_codec.dart';
-import 'package:html/dom.dart' as dom;
+import 'package:html/dom.dart' hide Text;
 import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,8 +18,8 @@ Future<Map<String, String>> fetchCategories() async {
     prefs.clear();
     prefs.setString('catagory', body);
   }
-  var document = parse(body);
-  List<dom.Element> links = document.querySelectorAll('a[href^=look]');
+  Document document = parse(body);
+  List<Element> links = document.querySelectorAll('a[href^=look]');
   Map<String, String> result = new Map();
   for (var link in links) {
     result[link.text] = link.attributes['href'];
