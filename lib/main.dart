@@ -5,11 +5,19 @@ import 'package:gbk_codec/gbk_codec.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-Future<Map<String, String>> fetchLocations() async {
+Future<Map<String, String>> fetchCategories() async {
   Client client = Client();
+  SharedPreferences prefs = await SharedPreferences.getInstance();
   Response resp = await client.get('http://www.62422.cn/search.asp?cataid=77');
-  var document = parse(gbk_bytes.decode(resp.bodyBytes));
+  String body = gbk_bytes.decode(resp.bodyBytes);
+  String lastBody = prefs.getString('catagory');
+  if (lastBody != body) {
+    prefs.clear();
+    prefs.setString('catagory', body);
+  }
+  var document = parse(body);
   List<dom.Element> links = document.querySelectorAll('a[href^=look]');
   Map<String, String> result = new Map();
   for (var link in links) {
@@ -19,50 +27,57 @@ Future<Map<String, String>> fetchLocations() async {
 }
 
 Future<List<String>> fetchPrices(String urlPath) async {
-  Client client = Client();
-  Response resp = await client.get('http://www.62422.cn/$urlPath');
-  var document = parse(gbk_bytes.decode(resp.bodyBytes));
-  String title = document.querySelector('title').text.split(':')[0];
-  String location = title.split('地区')[0].split('日')[1];
-  List<String> data = document.body.text
-      .split('点此查看会员收费标准与办理方式')[1]
-      .split('\n')[0]
-      .split(new RegExp("(?=$location)"))
-      .where((it) => it.startsWith(location))
-      .map((it) => it.trim())
-      .toList();
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  List<String> data;
+  if (prefs.containsKey(urlPath)) {
+    data = prefs.getStringList(urlPath);
+  } else {
+    Client client = Client();
+    Response resp = await client.get('http://www.62422.cn/$urlPath');
+    var document = parse(gbk_bytes.decode(resp.bodyBytes));
+    String title = document.querySelector('title').text.split(':')[0];
+    String location = title.split('地区')[0].split('日')[1];
+    data = document.body.text
+        .split('点此查看会员收费标准与办理方式')[1]
+        .split('\n')[0]
+        .split(new RegExp("(?=$location)"))
+        .where((it) => it.startsWith(location))
+        .map((it) => it.trim())
+        .toList();
+    prefs.setStringList(urlPath, data);
+  }
   return data;
 }
 
-class LocationsList extends StatelessWidget {
-  final Map<String, String> locations;
+class CategoriesList extends StatelessWidget {
+  final Map<String, String> categories;
   final ScrollController controller = ScrollController();
 
-  LocationsList({Key key, this.locations}) : super(key: key);
+  CategoriesList({Key key, this.categories}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    var locationsList = locations.keys.toList();
+    var categoriesList = categories.keys.toList();
     return DraggableScrollbar.rrect(
       controller: controller,
       child: ListView.builder(
         controller: controller,
-        itemCount: locations.length,
+        itemCount: categories.length,
         itemBuilder: (BuildContext ctx, int index) {
           return Card(
               child: ListTile(
-            title: Text(locationsList[index], textAlign: TextAlign.center),
+            title: Text(categoriesList[index], textAlign: TextAlign.center),
             trailing: Icon(Icons.keyboard_arrow_right),
             onTap: () {
               Navigator.of(context).push(
                   MaterialPageRoute<void>(builder: (BuildContext context) {
                 return Scaffold(
                   appBar: AppBar(
-                    title: Text(locationsList[index],
+                    title: Text(categoriesList[index],
                         style: TextStyle(fontSize: 17)),
                   ),
                   body: FutureBuilder<List<String>>(
-                    future: fetchPrices(locations[locationsList[index]]),
+                    future: fetchPrices(categories[categoriesList[index]]),
                     builder: (context, snapshot) {
                       if (snapshot.hasError) print(snapshot.error);
                       return snapshot.hasData
@@ -105,13 +120,13 @@ class PricesList extends StatelessWidget {
 }
 
 void main() {
-  runApp(MyApp(locations: fetchLocations()));
+  runApp(MyApp(categories: fetchCategories()));
 }
 
 class MyApp extends StatelessWidget {
-  final Future<Map<String, String>> locations;
+  final Future<Map<String, String>> categories;
 
-  MyApp({Key key, this.locations}) : super(key: key);
+  MyApp({Key key, this.categories}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -126,11 +141,11 @@ class MyApp extends StatelessWidget {
           centerTitle: true,
         ),
         body: FutureBuilder<Map<String, String>>(
-          future: locations,
+          future: categories,
           builder: (context, snapshot) {
             if (snapshot.hasError) print(snapshot.error);
             return snapshot.hasData
-                ? LocationsList(locations: snapshot.data)
+                ? CategoriesList(categories: snapshot.data)
                 : Center(child: CircularProgressIndicator());
           },
         ),
