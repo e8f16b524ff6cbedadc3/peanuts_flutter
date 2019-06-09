@@ -8,6 +8,7 @@ import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+// Categories
 Future<Map<String, String>> fetchCategories() async {
   Client client = Client();
   SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -27,6 +28,65 @@ Future<Map<String, String>> fetchCategories() async {
   return result;
 }
 
+class CategoriesList extends StatelessWidget {
+  final Map<String, String> categories;
+  final ScrollController controller = ScrollController();
+
+  CategoriesList({Key key, this.categories}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    var categoriesList = categories.keys.toList();
+    return DraggableScrollbar.rrect(
+      controller: controller,
+      child: ListView.builder(
+        controller: controller,
+        itemCount: categories.length,
+        itemBuilder: (BuildContext ctx, int index) {
+          String title = categoriesList[index];
+          return Card(
+              child: ListTile(
+            title: Text(title, textAlign: TextAlign.center),
+            trailing: Icon(Icons.keyboard_arrow_right),
+            onTap: () {
+              Navigator.of(context).push(
+                  CupertinoPageRoute<void>(builder: (BuildContext context) {
+                return PricesWidget(title: title, urlPath: categories[title]);
+              }));
+            },
+          ));
+        },
+      ),
+    );
+  }
+}
+
+class CategoriesWidget extends StatelessWidget {
+  final Future<Map<String, String>> categories;
+
+  CategoriesWidget({Key key, this.categories}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('中国花生价格行情', textAlign: TextAlign.center),
+        centerTitle: true,
+      ),
+      body: FutureBuilder<Map<String, String>>(
+        future: categories,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) print(snapshot.error);
+          return snapshot.hasData
+              ? CategoriesList(categories: snapshot.data)
+              : Center(child: CircularProgressIndicator());
+        },
+      ),
+    );
+  }
+}
+
+// Prices
 Future<List<String>> fetchPrices(String urlPath) async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   List<String> data;
@@ -48,52 +108,6 @@ Future<List<String>> fetchPrices(String urlPath) async {
     prefs.setStringList(urlPath, data);
   }
   return data;
-}
-
-class CategoriesList extends StatelessWidget {
-  final Map<String, String> categories;
-  final ScrollController controller = ScrollController();
-
-  CategoriesList({Key key, this.categories}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    var categoriesList = categories.keys.toList();
-    return DraggableScrollbar.rrect(
-      controller: controller,
-      child: ListView.builder(
-        controller: controller,
-        itemCount: categories.length,
-        itemBuilder: (BuildContext ctx, int index) {
-          return Card(
-              child: ListTile(
-            title: Text(categoriesList[index], textAlign: TextAlign.center),
-            trailing: Icon(Icons.keyboard_arrow_right),
-            onTap: () {
-              Navigator.of(context).push(
-                  CupertinoPageRoute<void>(builder: (BuildContext context) {
-                return Scaffold(
-                  appBar: AppBar(
-                    title: Text(categoriesList[index],
-                        style: TextStyle(fontSize: 17)),
-                  ),
-                  body: FutureBuilder<List<String>>(
-                    future: fetchPrices(categories[categoriesList[index]]),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasError) print(snapshot.error);
-                      return snapshot.hasData
-                          ? PricesList(prices: snapshot.data)
-                          : Center(child: CircularProgressIndicator());
-                    },
-                  ),
-                );
-              }));
-            },
-          ));
-        },
-      ),
-    );
-  }
 }
 
 class PricesList extends StatelessWidget {
@@ -120,8 +134,29 @@ class PricesList extends StatelessWidget {
   }
 }
 
-void main() {
-  runApp(MyApp(categories: fetchCategories()));
+class PricesWidget extends StatelessWidget {
+  final String title;
+  final String urlPath;
+
+  PricesWidget({Key key, this.title, this.urlPath}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title, style: TextStyle(fontSize: 17)),
+      ),
+      body: FutureBuilder<List<String>>(
+        future: fetchPrices(urlPath),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) print(snapshot.error);
+          return snapshot.hasData
+              ? PricesList(prices: snapshot.data)
+              : Center(child: CircularProgressIndicator());
+        },
+      ),
+    );
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -136,21 +171,11 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: Scaffold(
-        appBar: AppBar(
-          title: Text('中国花生价格行情', textAlign: TextAlign.center),
-          centerTitle: true,
-        ),
-        body: FutureBuilder<Map<String, String>>(
-          future: categories,
-          builder: (context, snapshot) {
-            if (snapshot.hasError) print(snapshot.error);
-            return snapshot.hasData
-                ? CategoriesList(categories: snapshot.data)
-                : Center(child: CircularProgressIndicator());
-          },
-        ),
-      ),
+      home: CategoriesWidget(categories: categories),
     );
   }
+}
+
+void main() {
+  runApp(MyApp(categories: fetchCategories()));
 }
