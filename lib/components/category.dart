@@ -8,7 +8,7 @@ import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'price.dart' show PricesWidget;
+import 'package:peanut/components/price.dart' show PricesWidget;
 
 Future<Map<String, String>> fetchCategories() async {
   Client client = Client();

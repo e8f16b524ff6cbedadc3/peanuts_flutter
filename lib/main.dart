@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart' hide Element;
 
-import 'components/category.dart';
+import 'package:peanut/components/category.dart';
 
 class MyApp extends StatelessWidget {
   final Future<Map<String, String>> categories;
